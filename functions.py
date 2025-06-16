@@ -38,7 +38,7 @@ def greedy(energy):
     print("Total energy of the seam (greedy): ", total)
     return path
 
-def getPath(path, start):
+def getPath(path, start): # Get the seam path from the path array
     h, w = path.shape
     seam = np.zeros(h, dtype=int)
     seam[-1] = start
@@ -68,25 +68,25 @@ def getPath(path, start):
     return seam
 
 
-# Your original getSeam function - unchanged
-def getSeam(energy):
+def DP(energy):
     h, w = energy.shape
     dp = np.full((h, w+2), np.inf)
-    path = np.zeros((h, w), dtype=int)
-    dp[0, 1:w+1] = energy[0]
-    for i in range (1, h):
+    path = np.zeros((h, w), dtype=int) 
+    dp[0, 1:w+1] = energy[0] # Base case for the first row, shifted by 1 to account for padding
+    for i in range (1, h): 
         for j in range(1, w+1):
-            dp[i,j] = min(dp[i-1,j-1], dp[i-1,j], dp[i-1,j+1])
-            if dp[i,j] == dp[i-1,j-1]:
+            dp[i,j] = min(dp[i-1,j-1], dp[i-1,j], dp[i-1,j+1]) # DP update rule
+            if dp[i,j] == dp[i-1,j-1]: # Fill the path array with indices of the seam
                 path[i,j-1] = j-1
             elif dp[i,j-1] == dp[i-1,j]:
                 path[i,j-1] = j
             else:
                 path[i,j-1] = j+1
             dp[i,j] += energy[i,j-1]
-    start = np.argmin(dp[-1, 1:w+1])
-    seam = getPath(path, start)
+    start = np.argmin(dp[-1, 1:w+1]) # Find the index of the minimum energy in the last row (the seam start)
+    seam = getPath(path, start) # Get the seam path from the path array
     
+
     # Add bounds checking when calculating total energy
     total = 0
     for i in range(h):
@@ -101,32 +101,53 @@ def getSeam(energy):
     return seam
 
 
-# Additional functions for the tool
-
-def compute_energy(img):
-    """Compute energy map using gradient magnitude"""
+def compute_Sobel_energy(img): # Compute energy map using gradient magnitude
+    
     if len(img.shape) == 3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:
         gray = img
     
-    # Compute x and y gradients
+    # Compute x and y gradients 
     dx = ndimage.sobel(gray, axis=1)
     dy = ndimage.sobel(gray, axis=0)
-    
+
     # Compute gradient magnitude
     energy = np.sqrt(dx**2 + dy**2)
     
     return energy
 
+def apply_grabcut(img): # Apply grabCut to segment the foreground from the background
+    mask = np.zeros(img.shape[:2], np.uint8) # Create a mask to avoid negative values
+    bgdModel = np.zeros((1,65), np.float64) # Background model for grabCut
+    fgdModel = np.zeros((1,65), np.float64) # Foreground model for grabCut
+
+    # Define rectangle around center of the image
+    height, width = img.shape[:2]
+    rect = (width // 4, height // 4, width // 2, height // 2) # Avoid edges
+
+    cv2.grabCut(img, mask, rect, bgdModel, fgdModel, 5, cv2.GC_INIT_WITH_RECT) # Apply grabCut to segment the foreground
+
+    binary_mask = np.where((mask == 2) | (mask == 0), 0, 1).astype('uint8') # Create a binary mask for the foreground
+    return binary_mask 
+
+def compute_content_aware_energy(img):
+    sobel = compute_Sobel_energy(img)
+    mask = apply_grabcut(img) # Apply grabCut to get the foreground mask
+
+    sobel[mask == 1] *= 10 # Increase energy in the foreground region to protect it
+
+    return sobel
+    
+
 def remove_seam(img, seam):
     """Remove a seam from the image"""
-    h, w = img.shape[:2]
-    output = np.zeros((h, w-1, 3) if len(img.shape) == 3 else (h, w-1), dtype=img.dtype)
+    h, w = img.shape[:2] 
+    output = np.zeros((h, w-1, 3) if len(img.shape) == 3 else (h, w-1), dtype=img.dtype) 
     
-    for i in range(h):
-        col = seam[i]
-        if len(img.shape) == 3:
+    for i in range(h): 
+        col = seam[i] 
+        if len(img.shape) == 3: 
             output[i, :col] = img[i, :col]
             output[i, col:] = img[i, col+1:]
         else:
@@ -149,7 +170,7 @@ def visualize_seam(img, seam):
     
     return vis_img
 
-def visualize_seams_accumulate(img, seams):
+def visualize_seams_accumulate(img, seams_vertical, seams_horizontal):
     """Visualize multiple seams accumulated on the image"""
     vis_img = img.copy()
     h, w = img.shape[:2]
@@ -161,10 +182,15 @@ def visualize_seams_accumulate(img, seams):
         mask = np.zeros_like(vis_img, dtype=bool)
     
     # Mark all seam pixels in the mask
-    for seam in seams:
+    for seam in seams_vertical:
         for i in range(h):
             if 0 <= seam[i] < w:  # Ensure index is within bounds
                 mask[i, seam[i]] = True
+    
+    for seam in seams_horizontal:
+        for i in range(len(seam)):
+            if i < w and 0 <= seam[i] < h:  # Ensure index is within bounds
+                mask[seam[i], i] = True
     
     # Color the seam pixels in red (for color images) or white (for grayscale)
     if len(img.shape) == 3:
@@ -178,7 +204,7 @@ def visualize_seams_accumulate(img, seams):
     return vis_img
 
 
-def compare_seam_carving(img_path, num_seams=1):
+def compare_seam_carving(img_path, width=1, height=1):
     # Load image
     img = cv2.imread(img_path)
     if img is None:
@@ -191,27 +217,72 @@ def compare_seam_carving(img_path, num_seams=1):
     original_img = img.copy()  # Keep a copy of the original
     
     # Store all seams
-    all_greedy_seams = []
-    all_dp_seams = []
+    all_greedy_seams_vertical = []
+    all_dp_seams_vertical = []
+    all_greedy_seams_horizontal = []
+    all_dp_seams_horizontal = []
     
     # Process the image with both algorithms
-    for i in range(num_seams):
-        print(f"\nRemoving seam {i+1}/{num_seams}")
+    energy_greedy = compute_content_aware_energy(img_greedy)
+    seam_greedy = DP(energy_greedy)
+    all_greedy_seams_vertical.append(seam_greedy.copy())
+
+    energy_dp = compute_Sobel_energy(img_dp)
+    seam_dp = DP(energy_dp)
+    all_dp_seams_vertical.append(seam_dp.copy())
+
+    for i in range(width - 1):
+        print(f"\nRemoving seam {i+1}/{width} vertically")
         
         # Greedy algorithm
-        energy_greedy = compute_energy(img_greedy)
-        seam_greedy = greedy(energy_greedy)
-        all_greedy_seams.append(seam_greedy.copy())
+        energy_greedy = compute_Sobel_energy(img_greedy)
+        seam_greedy = DP(energy_greedy)
+        all_greedy_seams_vertical.append(seam_greedy.copy())
+
+        energy_dp = compute_Sobel_energy(img_dp)
+        seam_dp = DP(energy_dp)
+        all_dp_seams_vertical.append(seam_dp.copy())
+        
         
         # DP algorithm
-        energy_dp = compute_energy(img_dp)
-        seam_dp = getSeam(energy_dp)
-        all_dp_seams.append(seam_dp.copy())
+        #energy_dp = compute_Sobel_energy(img_dp)
+        #seam_dp = DP(energy_dp)
+        #all_dp_seams_vertical.append(seam_dp.copy())
         
         # Remove seams
         img_greedy = remove_seam(img_greedy, seam_greedy)
         img_dp = remove_seam(img_dp, seam_dp)
     
+    #transpose img_greedy and img_dp to do horizontal seam carving
+    if(height > 0):
+        img_greedy = cv2.transpose(img_greedy)
+        img_dp = cv2.transpose(img_dp)
+
+    for i in range(height):
+        print(f"\nRemoving seam {i+1} /{height} horizontally")
+        
+        # Greedy algorithm
+        energy_greedy = compute_Sobel_energy(img_greedy)
+        seam_greedy = DP(energy_greedy)
+        all_greedy_seams_horizontal.append(seam_greedy.copy())
+
+        energy_dp = compute_Sobel_energy(img_dp)
+        seam_dp = DP(energy_dp)
+        all_dp_seams_horizontal.append(seam_dp.copy())
+        
+        # DP algorithm
+        #energy_dp = compute_Sobel_energy(img_dp)
+        #seam_dp = DP(energy_dp)
+        #all_dp_seams_horizontal.append(seam_dp.copy())
+        
+        # Remove seams
+        img_greedy = remove_seam(img_greedy, seam_greedy)
+        img_dp = remove_seam(img_dp, seam_dp)
+        
+    # Transpose back to original orientation    
+    img_greedy = cv2.transpose(img_greedy)
+    img_dp = cv2.transpose(img_dp)
+
     # Setup visualization
     plt.figure(figsize=(15, 10))
     
@@ -222,14 +293,14 @@ def compare_seam_carving(img_path, num_seams=1):
     plt.axis('off')
     
     # Show all greedy seams accumulated
-    greedy_seams_vis = visualize_seams_accumulate(original_img, all_greedy_seams)
+    greedy_seams_vis = visualize_seams_accumulate(original_img, all_greedy_seams_vertical, all_greedy_seams_horizontal)
     plt.subplot(2, 2, 2)
     plt.imshow(cv2.cvtColor(greedy_seams_vis, cv2.COLOR_BGR2RGB))
     plt.title('All Greedy Seams')
     plt.axis('off')
     
     # Show all DP seams accumulated
-    dp_seams_vis = visualize_seams_accumulate(original_img, all_dp_seams)
+    dp_seams_vis = visualize_seams_accumulate(original_img, all_dp_seams_vertical ,all_dp_seams_horizontal)
     plt.subplot(2, 2, 3)
     plt.imshow(cv2.cvtColor(dp_seams_vis, cv2.COLOR_BGR2RGB))
     plt.title('All DP Seams')
@@ -256,13 +327,15 @@ def seam_carving_tool():
     
     # Get number of seams to remove
     try:
-        num_seams = int(input("Enter number of seams to remove: "))
+        width = int(input("Enter number of seams to remove vertically: "))
+        height = int(input("Enter number of seams to remove horizontally: "))
     except ValueError:
         print("Invalid number. Using 1 seam.")
-        num_seams = 1
+        width = 1
+        height = 1
     
     # Compare algorithms
-    result = compare_seam_carving(img_path, num_seams)
+    result = compare_seam_carving(img_path, width, height)
     
     # Unpack the results (handling both return value patterns)
     if len(result) == 4:
@@ -283,3 +356,6 @@ def seam_carving_tool():
         if dp_path:
             cv2.imwrite(dp_path, img_dp)
             print(f"DP result saved to {dp_path}")
+
+if __name__ == "__main__":
+    seam_carving_tool()

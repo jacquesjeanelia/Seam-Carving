@@ -78,4 +78,22 @@ class SeamCarver:
         self.energy_map = self.compute_energy()
         return self.image
     
+    def resize(self, new_width: int, new_height: int, algorithm: str = 'greedy'):
+        if algorithm not in ['greedy', 'dp']:
+            raise ValueError("Algorithm must be either 'greedy' or 'dp'.")
+        
+        current_height, current_width = self.image.shape[:2]
+        if new_width > current_width or new_height > current_height:
+            raise ValueError("New dimensions must be smaller than current dimensions.")
+        
+        while current_height > new_height or current_width > new_width:
+            if algorithm == 'greedy':
+                seam, _ = self.find_seam_greedy()
+            else:
+                seam, _ = self.find_seam_dp()
+            self.remove_seam(seam)
+            current_height, current_width = self.image.shape[:2]
+
+        return self.image
+    
     

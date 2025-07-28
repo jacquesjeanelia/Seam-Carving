@@ -96,4 +96,40 @@ class SeamCarver:
 
         return self.image
     
+    def show_image(self, save: bool = False, filename: str = 'output.png'):
+        plt.imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        if save:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        plt.show()
+        return self.image
     
+    def show_energy_map(self, save: bool = False, filename: str = 'energy_map.png'):
+        plt.imshow(self.energy_map, cmap='hot')
+        plt.colorbar()
+        plt.axis('off')
+        if save:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        plt.show()
+        return self.energy_map
+    
+    def show_seams(self, save: bool = False, filename: str = 'seams.png'):
+        seam_image = self.image.copy()
+        for seam in self.seams:
+            for i in range(len(seam)):
+                seam_image[i, seam[i]] = [255, 0, 0]
+        plt.imshow(cv2.cvtColor(seam_image, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        if save:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        plt.show()
+        return seam_image
+    
+    def run(self, new_width: int, new_height: int, algorithm: str = 'greedy', save_image: bool = False, save_energy_map: bool = False, save_seams: bool = False):
+        resized_image = self.resize(new_width, new_height, algorithm)
+        self.show_image(save=save_image, filename='resized_image.png')
+        self.show_energy_map(save=save_energy_map, filename='energy_map.png')
+        self.show_seams(save=save_seams, filename='seams.png')
+        return resized_image
+    
+

@@ -9,7 +9,7 @@ class SeamCarver:
         if self.image is None:
             raise ValueError("Image not found or unable to read.")
         self.energy_map = self.compute_energy()
-        self.seams = []
+        self.seams_map = self.image.copy() #FIXME
     
     def compute_energy(self):
         if len(self.image.shape) < 2:
@@ -22,7 +22,7 @@ class SeamCarver:
     
     def find_seam_greedy(self):
         rows, cols = self.energy_map.shape
-        seam = np.zeros(rows, dtype=np.int)
+        seam = np.zeros(rows, dtype=int)
         seam[0] = np.argmin(self.energy_map[0]) 
         cost = self.energy_map[0, seam[0]]
         for i in range(1, rows):
@@ -34,13 +34,12 @@ class SeamCarver:
             else:
                 seam[i] = np.argmin(self.energy_map[i, prev_col - 1:prev_col + 2]) + (prev_col - 1)
             cost += self.energy_map[i, seam[i]]
-        self.seams.append(seam)
         return seam, cost
 
     def find_seam_dp(self):
         rows, cols = self.energy_map.shape
         dp = np.zeros((rows, cols))
-        backtrack = np.zeros((rows, cols), dtype=np.int)
+        backtrack = np.zeros((rows, cols), dtype=int)
 
         dp[0] = self.energy_map[0]
         for i in range(1, rows):
@@ -58,17 +57,21 @@ class SeamCarver:
                     backtrack[i, j] = min_index
                     dp[i, j] = self.energy_map[i, j] + dp[i - 1, min_index]
 
-        seam = np.zeros(rows, dtype=np.int)
+        seam = np.zeros(rows, dtype=int)
         seam[-1] = np.argmin(dp[-1])
         # Backtrack to find the seam
         for i in range(rows - 2, -1, -1):
             seam[i] = backtrack[i + 1, seam[i + 1]]
         
-        self.seams.append(seam)
         return seam, dp[-1].min()
     
     def remove_seam(self, seam):
         rows, cols = self.image.shape[:2]
+        # Color the seam
+        for i in range(rows): #FIXME
+            col = seam[i]
+            self.seams_map[i, col] = [255, 0, 0]
+        # Remove the seam from the image
         new_image = np.zeros((rows, cols - 1, 3), dtype=self.image.dtype)
         for i in range(rows):
             col = seam[i]
@@ -86,14 +89,38 @@ class SeamCarver:
         if new_width > current_width or new_height > current_height:
             raise ValueError("New dimensions must be smaller than current dimensions.")
         
-        while current_height > new_height or current_width > new_width:
+        seam_number = 1
+        while current_width > new_width:
+            print(f"Removing seam {seam_number}: Current width {current_width}, Target width {new_width}")
+            seam_number += 1
             if algorithm == 'greedy':
                 seam, _ = self.find_seam_greedy()
             else:
                 seam, _ = self.find_seam_dp()
             self.remove_seam(seam)
             current_height, current_width = self.image.shape[:2]
+        
+        seam_number = 1
 
+        self.image = self.image.transpose((1, 0, 2))  # Transpose to work with height
+        self.energy_map = self.compute_energy()
+        self.seams_map = self.seams_map.transpose((1, 0, 2))
+        #current_height, current_width = self.image.shape[:2]
+
+        while current_height > new_height:
+            print(f"Removing seam {seam_number}: Current height {current_height}, Target height {new_height}")
+            seam_number += 1
+            if algorithm == 'greedy':
+                seam, _ = self.find_seam_greedy()
+            else:
+                seam, _ = self.find_seam_dp()
+            self.remove_seam(seam)
+            current_width, current_height = self.image.shape[:2]
+
+        print(f"DONE: CURRENT HEIGHT: {current_height} WANTED HEIGHT: {new_height}")
+        self.image = self.image.transpose((1, 0, 2))
+        self.energy_map = self.compute_energy()
+        self.seams_map = self.seams_map.transpose((1, 0, 2)) 
         return self.image
     
     def show_image(self, save: bool = False, filename: str = 'output.png'):
@@ -113,17 +140,15 @@ class SeamCarver:
         plt.show()
         return self.energy_map
     
-    def show_seams(self, save: bool = False, filename: str = 'seams.png'):
-        seam_image = self.image.copy()
-        for seam in self.seams:
-            for i in range(len(seam)):
-                seam_image[i, seam[i]] = [255, 0, 0]
+    def show_seams(self, save: bool = False, filename: str = 'seams.png'): #FIXME
+        seam_image = self.seams_map.copy()
         plt.imshow(cv2.cvtColor(seam_image, cv2.COLOR_BGR2RGB))
         plt.axis('off')
         if save:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
         plt.show()
         return seam_image
+    
     
     def run(self, new_width: int, new_height: int, algorithm: str = 'greedy', save_image: bool = False, save_energy_map: bool = False, save_seams: bool = False):
         resized_image = self.resize(new_width, new_height, algorithm)
@@ -132,4 +157,20 @@ class SeamCarver:
         self.show_seams(save=save_seams, filename='seams.png')
         return resized_image
     
+#main function to run the seam carving process
+if __name__ == "__main__":
+    # path = input("Enter the path to the image: ")
+    # new_width = int(input("Enter the new width: "))
+    # new_height = int(input("Enter the new height: "))
+    # algorithm = input("Enter the algorithm (greedy/dp): ").strip().lower()
+    # save_image = input("Save resized image? (yes/no): ").strip().lower()
+    # save_energy_map = input("Save energy map? (yes/no): ").strip().lower()
+    # save_seams = input("Save seams? (yes/no): ").strip().lower()
+    # save_image = save_image == 'yes'
+    # save_energy_map = save_energy_map == 'yes'
+    # save_seams = save_seams == 'yes'
+    #seam_carver = SeamCarver(path)
+    #seam_carver.run(new_width, new_height, algorithm, save_image, save_energy_map, save_seams)
+    seam_carver = SeamCarver('11999.jpg')
+    seam_carver.run(930, 1340, 'greedy', save_image=True, save_energy_map=True, save_seams=True)
 

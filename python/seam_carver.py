@@ -157,20 +157,21 @@ class SeamCarver:
         self.show_seams(save=save_seams, filename='seams.png')
         return resized_image
     
+import sys
 #main function to run the seam carving process
 if __name__ == "__main__":
-    # path = input("Enter the path to the image: ")
-    # new_width = int(input("Enter the new width: "))
-    # new_height = int(input("Enter the new height: "))
-    # algorithm = input("Enter the algorithm (greedy/dp): ").strip().lower()
-    # save_image = input("Save resized image? (yes/no): ").strip().lower()
-    # save_energy_map = input("Save energy map? (yes/no): ").strip().lower()
-    # save_seams = input("Save seams? (yes/no): ").strip().lower()
-    # save_image = save_image == 'yes'
-    # save_energy_map = save_energy_map == 'yes'
-    # save_seams = save_seams == 'yes'
-    #seam_carver = SeamCarver(path)
-    #seam_carver.run(new_width, new_height, algorithm, save_image, save_energy_map, save_seams)
-    seam_carver = SeamCarver('11999.jpg')
-    seam_carver.run(930, 1340, 'greedy', save_image=True, save_energy_map=True, save_seams=True)
+    if len(sys.argv) >= 4:
+        new_width = int(sys.argv[1])
+        new_height = int(sys.argv[2])
+        algorithm = sys.argv[3]
+        try:
+            seam_carver = SeamCarver('11999.jpg')
+            seam_carver.run(new_width, new_height, algorithm, save_image=True, save_energy_map=True, save_seams=True)
+            print("Seam carving completed.")
+        except Exception as e:
+            print("Error occurred during seam carving:", e)
+    else:
+        seam_carver = SeamCarver('11999.jpg')
+        seam_carver.run(930, 1340, 'greedy', save_image=True, save_energy_map=True, save_seams=True)
+        print("Seam carving completed with default parameters.")
 

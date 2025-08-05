@@ -1,68 +1,91 @@
-import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
-import path, { parse } from "path";
-import { existsSync } from "fs";
+import { NextRequest, NextResponse } from "next/server"
+import { writeFile, mkdir } from "fs/promises"
+import path from "path"
+import { existsSync } from "fs"
+import { spawn } from "child_process"
+
 
 export async function POST(request: NextRequest) {
-    try {
-        
+    try{
         const data = await request.json()
-
-        const width = parseInt(data.width)
-        const height = parseInt(data.height)
-        const algorithm = data.algorithm || "greedy"
-
-        if (!width || !height){
-            return NextResponse.json({ error: "Width and height are required." }, { status: 400 })
+        const { filename, oldWidth, oldHeight,newWidth, newHeight, algorithm } = data
+        if (!filename || !newWidth || !newHeight || !algorithm) {
+            return NextResponse.json({ error: "Missing required parameters" }, { status: 400 })
         }
 
-        const scriptPath = path.join(process.cwd(), 'python', 'seam_carver.py')
-
-        if (!existsSync(scriptPath)) {
-            return NextResponse.json({ error: "Python script not found." }, { status: 500 })
+        if (!["greedy", "dp"].includes(algorithm)) {
+            return NextResponse.json({ error: "Invalid algorithm specified" }, { status: 400 })
         }
 
-        const output = await callPythonScript(scriptPath, width, height, algorithm)
+        if (newWidth <= 0 || newHeight <= 0 || !Number.isInteger(newWidth) || !Number.isInteger(newHeight)) {
+            return NextResponse.json({ error: "Width and Height must be positive integers" }, { status: 400 })
+        }
+
+        if ( newWidth > oldWidth || newHeight > oldHeight) {
+            return NextResponse.json({ error: "New dimensions must be less than or equal to original dimensions" }, { status: 400 })
+        }
+
+        const uploadDir = path.join(process.cwd(), "public", "uploads")
+        if (!existsSync(uploadDir)) {
+            await mkdir(uploadDir, { recursive: true })
+        }
+
+        const outputDir = path.join(process.cwd(), "public", "outputs")
+        if (!existsSync(outputDir)) {
+            await mkdir(outputDir, { recursive: true })
+        }
+
+        const filePath = path.join(uploadDir, filename)
+        if (!existsSync(filePath)) {
+            return NextResponse.json({ error: "Image file does not exist" }, { status: 404 })
+        }
+
+        const pythonScript = path.join(process.cwd(), "python", "__init__.py")
+        const output = await callPythonScript(pythonScript, filePath, newWidth, newHeight, algorithm)
 
         return NextResponse.json({
             success: true,
-            message: "Seam carving completed successfully.",
+            message: "Image processed successfully",
+            processedPath: `/outputs/${filename}`,
+            /*             processedPath: `/outputs/processed-images/${filename}`,
+            energyMapPath: `/outputs/energy-maps/energy_map.png`,
+            seamVisualizationPath: `/outputs/seam-visualization/seams.png`, */
             output: output,
-            parameters: { width, height, algorithm }
+            newDimensions: { newWidth, newHeight },
+            algorithm: algorithm
         })
     } catch (error) {
-        console.error("Error in seam carving API:", error)
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+        console.error("Error processing image:", error)
+        return NextResponse.json({ error: "Failed to process image" }, { status: 500 })
     }
 }
 
-function callPythonScript(scriptPath: string, width: number, height: number, algorithm: string): Promise<string> {
+function callPythonScript(scriptPath: string, filePath: string, newWidth: number, newHeight: number, algorithm: string) {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python', [scriptPath, width.toString(), height.toString(), algorithm])
-
+        const command = process.platform === 'win32' 
+        ? path.join(process.cwd(), ".venv", "Scripts", "python.exe") 
+        : path.join(process.cwd(), ".venv", "bin", "python")
+        
+        const pythonPath = path.join(process.cwd(), "python", "__init__.py")
+        const pythonProcess = spawn(command, [pythonPath, filePath, newWidth.toString(), newHeight.toString(), algorithm])
+        console.log(`Command: ${command}`)
+        console.log(`Script Path: ${pythonPath}`)
+        console.log(`File Path: ${filePath}`)
+        console.log(`New Width: ${newWidth}, New Height: ${newHeight}, Algorithm: ${algorithm}`)
+        
         let output = ''
         let errorOutput = ''
-
-        pythonProcess.stdout.on('data', (data)=>{
-            const message = data.toString()
-            console.log("Python output:", message);
-            output += message
+        pythonProcess.stdout.on('data', (data: Buffer) => {
+            output += data.toString()
         })
-
-        pythonProcess.stderr.on('data', (data)=>{
-            const errorMessage = data.toString()
-            console.error("Python error output:", errorMessage);
-            errorOutput += errorMessage
+        pythonProcess.stderr.on('data', (data: Buffer) => {
+            errorOutput += data.toString()
         })
-
-        pythonProcess.on('close', (code)=>{
-            if(code === 0){
-                resolve(output)
-            }
-            else{
+        pythonProcess.on('close', (code: number) => {
+            if (code !== 0) {
                 reject(new Error(`Python script exited with code ${code}: ${errorOutput}`))
             }
+            resolve(output)
         })
-
     })
 }

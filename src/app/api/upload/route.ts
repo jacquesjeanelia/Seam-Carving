@@ -1,83 +1,113 @@
-import { NextRequest, NextResponse } from "next/server";
-import {writeFile, mkdir} from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+import { NextRequest, NextResponse } from "next/server"
+import { writeFile, mkdir } from "fs/promises"
+import path from "path"
+import { existsSync } from "fs"
+import { spawn } from "child_process"
 
 export async function POST(request: NextRequest){
     try{
-        const formData = await request.formData()
-        const file = formData.get("image") as File
+        const data = await request.formData()
+        const image = data.get("image") as File
+        const name = image.name.replace(/\.[^/.]+$/, "") + ".png" // Ensure the file is saved as PNG
+        console.log("Received image:", image?.name, image?.size)
 
-        if(!file || !file.name){
-            return NextResponse.json({ error: "Image file is required." }, { status: 400 })
+        if (!image || !image.name) {
+            console.error("No image file provided")
+            return NextResponse.json({ error: "No image file provided" }, { status: 400 });
         }
 
-        if(!file.type.startsWith("image/")){
-            return NextResponse.json({ error: "Invalid file type. Please upload an image." }, { status: 400 })
+        if (!image.type.startsWith("image/")) {
+            console.error("Invalid file type:", image.type);
+            return NextResponse.json({ error: "Invalid file type. Please upload an image." }, { status: 400 });
         }
 
-        console.log("Received file:", file.name)
-        const uploadsDir = path.join(process.cwd(), 'uploads')
-        if (!existsSync(uploadsDir)){
-            await mkdir(uploadsDir, {recursive: true})
-            console.log("Created uploads directory:", uploadsDir)
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        if (!existsSync(uploadDir)) {
+            console.log("Creating upload directory:", uploadDir);
+            await mkdir(uploadDir, { recursive: true });
         }
+        console.log("Upload directory exists or created:", uploadDir);
 
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
+        const filePath = path.join(uploadDir, name);
+        console.log("Saving image to:", filePath);
+        const bytes = await image.arrayBuffer();
+        await writeFile(filePath, Buffer.from(bytes));
 
-        const timestamp = Date.now()
-        const fileExtension = path.extname(file.name)
-        const fileName = `uploaded_image_${timestamp}-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`
-        const filePath = path.join(uploadsDir, fileName)
-
-        await writeFile(filePath, buffer)
-        console.log("File saved to:", filePath)
-
-        const { width, height} = await getImageDimensions(filePath)
+        let { width, height } = await getImageDimensions(filePath);
+        console.log("Image dimensions:", { width, height });
 
         return NextResponse.json({
             success: true,
-            message: "Image uploaded successfully.",
-            fileName,
-            filePath,
-            dimensions: { width, height }
-        })
+            filename: name,
+            imageUrl: `/uploads/${name}`,
+            originalDimensions: { width, height },
+            message: "Image uploaded successfully"
+        });
     } catch (error) {
-        console.error("Error in upload API:", error)
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+        console.error("Error uploading image:", error);
+        return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
     }
 }
 
-async function getImageDimensions(filePath: string): Promise<{ width: number, height: number }> {
+async function getImageDimensions(filePath: string): Promise<{ width: number; height: number }> {
     return new Promise((resolve, reject) => {
-        const { spawn } = require('child_process')
-
-        const pythonCode = `
-            import cv2
-            import sys
-            image = cv2.imread('${filePath.replace(/\\/g, '/')}')
-            if image is not None:
-                height, width = image.shape[:2]
-                print(f"{width},{height}")
-            else:
-                print("0,0")
-            `
-        const pythonProcess = spawn('python', ['-c', pythonCode])
+        const script = `
+import cv2
+image = cv2.imread('${filePath.replace(/\\/g, '/')}')
+if image is None:
+    print("0,0")
+else:
+    height, width = image.shape[:2]
+    print(f"{width},{height}")
+        `
+        
+        // Use the full path to the Python executable in the virtual environment
+        const command = process.platform === 'win32' 
+            ? path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
+            : path.join(process.cwd(), '.venv', 'bin', 'python')
+        
+        console.log(`Running Python command: ${command}`)
+        const pythonProcess = spawn(command, ['-c', script])
 
         let output = ''
+        let errorOutput = ''
+        
         pythonProcess.stdout.on('data', (data: Buffer) => {
             output += data.toString()
         })
+        
+        pythonProcess.stderr.on('data', (data: Buffer) => {
+            errorOutput += data.toString()
+        })
 
         pythonProcess.on('close', (code: number) => {
-            if (code === 0){
-                const [width, height] = output.trim().split(',').map(Number)
-                resolve({ width: width || 0, height: height || 0 })
-            }else{
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}`)
+                console.error(`Python stderr: ${errorOutput}`)
                 resolve({ width: 0, height: 0 })
+                return
             }
-        })
-    })
-}
             
+            const trimmedOutput = output.trim()
+            console.log(`Python output: "${trimmedOutput}"`)
+            
+            if (!trimmedOutput || !trimmedOutput.includes(',')) {
+                console.error('Invalid Python output format')
+                resolve({ width: 0, height: 0 })
+                return
+            }
+            
+            const [widthStr, heightStr] = trimmedOutput.split(',')
+            const width = parseInt(widthStr.trim(), 10)
+            const height = parseInt(heightStr.trim(), 10)
+            
+            if (isNaN(width) || isNaN(height)) {
+                console.error('Failed to parse dimensions from Python output')
+                resolve({ width: 0, height: 0 })
+                return
+            }
+            
+            resolve({ width, height })
+        })
+    })    
+}

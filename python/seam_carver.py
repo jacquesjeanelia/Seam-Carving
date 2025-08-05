@@ -117,61 +117,29 @@ class SeamCarver:
             self.remove_seam(seam)
             current_width, current_height = self.image.shape[:2]
 
-        print(f"DONE: CURRENT HEIGHT: {current_height} WANTED HEIGHT: {new_height}")
         self.image = self.image.transpose((1, 0, 2))
         self.energy_map = self.compute_energy()
         self.seams_map = self.seams_map.transpose((1, 0, 2)) 
         return self.image
     
-    def show_image(self, save: bool = False, filename: str = 'output.png'):
+    def save_image(self, filename: str = 'output.png'):
         plt.imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
         plt.axis('off')
-        if save:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        plt.show()
+        
+        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
         return self.image
     
-    def show_energy_map(self, save: bool = False, filename: str = 'energy_map.png'):
+    def save_energy_map(self, filename: str = 'energy_map.png'):
         plt.imshow(self.energy_map, cmap='hot')
         plt.colorbar()
         plt.axis('off')
-        if save:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        plt.show()
+        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
         return self.energy_map
     
-    def show_seams(self, save: bool = False, filename: str = 'seams.png'): #FIXME
+    def save_seams(self, filename: str = 'seams.png'): #FIXME
         seam_image = self.seams_map.copy()
         plt.imshow(cv2.cvtColor(seam_image, cv2.COLOR_BGR2RGB))
         plt.axis('off')
-        if save:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        plt.show()
+        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
         return seam_image
     
-    
-    def run(self, new_width: int, new_height: int, algorithm: str = 'greedy', save_image: bool = False, save_energy_map: bool = False, save_seams: bool = False):
-        resized_image = self.resize(new_width, new_height, algorithm)
-        self.show_image(save=save_image, filename='resized_image.png')
-        self.show_energy_map(save=save_energy_map, filename='energy_map.png')
-        self.show_seams(save=save_seams, filename='seams.png')
-        return resized_image
-    
-import sys
-#main function to run the seam carving process
-if __name__ == "__main__":
-    if len(sys.argv) >= 4:
-        new_width = int(sys.argv[1])
-        new_height = int(sys.argv[2])
-        algorithm = sys.argv[3]
-        try:
-            seam_carver = SeamCarver('11999.jpg')
-            seam_carver.run(new_width, new_height, algorithm, save_image=True, save_energy_map=True, save_seams=True)
-            print("Seam carving completed.")
-        except Exception as e:
-            print("Error occurred during seam carving:", e)
-    else:
-        seam_carver = SeamCarver('11999.jpg')
-        seam_carver.run(930, 1340, 'greedy', save_image=True, save_energy_map=True, save_seams=True)
-        print("Seam carving completed with default parameters.")
-

@@ -9,7 +9,6 @@ export async function POST(request: NextRequest){
         const data = await request.formData()
         const image = data.get("image") as File
         const name = image.name.replace(/\.[^/.]+$/, "") + ".png" // Ensure the file is saved as PNG
-        console.log("Received image:", image?.name, image?.size)
 
         if (!image || !image.name) {
             console.error("No image file provided")
@@ -23,23 +22,18 @@ export async function POST(request: NextRequest){
 
         const uploadDir = path.join(process.cwd(), "public", "uploads");
         if (!existsSync(uploadDir)) {
-            console.log("Creating upload directory:", uploadDir);
             await mkdir(uploadDir, { recursive: true });
         }
-        console.log("Upload directory exists or created:", uploadDir);
 
         const filePath = path.join(uploadDir, name);
-        console.log("Saving image to:", filePath);
         const bytes = await image.arrayBuffer();
         await writeFile(filePath, Buffer.from(bytes));
-
         let { width, height } = await getImageDimensions(filePath);
-        console.log("Image dimensions:", { width, height });
 
         return NextResponse.json({
             success: true,
             filename: name,
-            imageUrl: `/uploads/${name}`,
+            filePath: `/uploads/${name}`,
             originalDimensions: { width, height },
             message: "Image uploaded successfully"
         });
@@ -66,7 +60,6 @@ else:
             ? path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
             : path.join(process.cwd(), '.venv', 'bin', 'python')
         
-        console.log(`Running Python command: ${command}`)
         const pythonProcess = spawn(command, ['-c', script])
 
         let output = ''
@@ -89,7 +82,6 @@ else:
             }
             
             const trimmedOutput = output.trim()
-            console.log(`Python output: "${trimmedOutput}"`)
             
             if (!trimmedOutput || !trimmedOutput.includes(',')) {
                 console.error('Invalid Python output format')

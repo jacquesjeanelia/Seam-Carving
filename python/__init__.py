@@ -11,6 +11,8 @@ def main():
     height = int(sys.argv[3])
     algorithm = sys.argv[4]
 
+
+
     try:
         seam_carver = SeamCarver(image_path)
         seam_carver.resize(width, height, algorithm)

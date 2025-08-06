@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -89,27 +90,34 @@ class SeamCarver:
         if new_width > current_width or new_height > current_height:
             raise ValueError("New dimensions must be smaller than current dimensions.")
         
-        seam_number = 1
+        width_difference = current_width - new_width
+        height_difference = current_height - new_height
+        total_difference = width_difference + height_difference
+
+        progress = 0
+        seams = 1
         while current_width > new_width:
-            print(f"Removing seam {seam_number}: Current width {current_width}, Target width {new_width}")
-            seam_number += 1
+            progress = int(seams / (total_difference) * 100)
+            print(f"Progress: {progress}%")
+            sys.stdout.flush()
+            seams += 1
             if algorithm == 'greedy':
                 seam, _ = self.find_seam_greedy()
             else:
                 seam, _ = self.find_seam_dp()
             self.remove_seam(seam)
             current_height, current_width = self.image.shape[:2]
-        
-        seam_number = 1
 
         self.image = self.image.transpose((1, 0, 2))  # Transpose to work with height
         self.energy_map = self.compute_energy()
         self.seams_map = self.seams_map.transpose((1, 0, 2))
-        #current_height, current_width = self.image.shape[:2]
+
 
         while current_height > new_height:
-            print(f"Removing seam {seam_number}: Current height {current_height}, Target height {new_height}")
-            seam_number += 1
+            progress = int(seams / (total_difference) * 100)
+            print(f"Progress: {progress}%")
+            seams += 1
+            sys.stdout.flush()
             if algorithm == 'greedy':
                 seam, _ = self.find_seam_greedy()
             else:

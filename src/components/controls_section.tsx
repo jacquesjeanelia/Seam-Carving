@@ -1,6 +1,7 @@
 'use client'
 
 import { useSeamCarver } from '@/hooks/use_seam_carver'
+import { CpuChipIcon, BoltIcon } from '@heroicons/react/24/outline'
 
 export function ControlsSection() {
   const { 
@@ -22,17 +23,120 @@ export function ControlsSection() {
       <div className="space-y-4">
         {/* Algorithm Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Algorithm
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Algorithm Selection
           </label>
-          <select
-            value={algorithm}
-            onChange={(e) => setAlgorithm(e.target.value as 'greedy' | 'dp')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="dp">Dynamic Programming</option>
-            <option value="greedy">Greedy</option>
-          </select>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setAlgorithm('dp')}
+              className={`
+                relative p-4 rounded-xl border-2 transition-all duration-200 ease-in-out group
+                ${algorithm === 'dp'
+                  ? 'border-blue-500 bg-blue-50 shadow-md'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                }
+              `}
+            >
+              <div className="flex flex-col items-center space-y-2">
+                <div className={`
+                  p-2 rounded-lg transition-colors duration-200
+                  ${algorithm === 'dp'
+                    ? 'bg-blue-100'
+                    : 'bg-gray-100 group-hover:bg-gray-200'
+                  }
+                `}>
+                  <CpuChipIcon className={`
+                    w-6 h-6 transition-colors duration-200
+                    ${algorithm === 'dp'
+                      ? 'text-blue-600'
+                      : 'text-gray-600'
+                    }
+                  `} />
+                </div>
+                <div className="text-center">
+                  <p className={`
+                    text-sm font-medium transition-colors duration-200
+                    ${algorithm === 'dp'
+                      ? 'text-blue-900'
+                      : 'text-gray-900'
+                    }
+                  `}>
+                    Dynamic Programming
+                  </p>
+                  <p className={`
+                    text-xs mt-1 transition-colors duration-200
+                    ${algorithm === 'dp'
+                      ? 'text-blue-600'
+                      : 'text-gray-500'
+                    }
+                  `}>
+                    Optimal results
+                  </p>
+                </div>
+              </div>
+              {algorithm === 'dp' && (
+                <div className="absolute top-2 right-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                </div>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAlgorithm('greedy')}
+              className={`
+                relative p-4 rounded-xl border-2 transition-all duration-200 ease-in-out group
+                ${algorithm === 'greedy'
+                  ? 'border-blue-500 bg-blue-50 shadow-md'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                }
+              `}
+            >
+              <div className="flex flex-col items-center space-y-2">
+                <div className={`
+                  p-2 rounded-lg transition-colors duration-200
+                  ${algorithm === 'greedy'
+                    ? 'bg-blue-100'
+                    : 'bg-gray-100 group-hover:bg-gray-200'
+                  }
+                `}>
+                  <BoltIcon className={`
+                    w-6 h-6 transition-colors duration-200
+                    ${algorithm === 'greedy'
+                      ? 'text-blue-600'
+                      : 'text-gray-600'
+                    }
+                  `} />
+                </div>
+                <div className="text-center">
+                  <p className={`
+                    text-sm font-medium transition-colors duration-200
+                    ${algorithm === 'greedy'
+                      ? 'text-blue-900'
+                      : 'text-gray-900'
+                    }
+                  `}>
+                    Greedy
+                  </p>
+                  <p className={`
+                    text-xs mt-1 transition-colors duration-200
+                    ${algorithm === 'greedy'
+                      ? 'text-blue-600'
+                      : 'text-gray-500'
+                    }
+                  `}>
+                    Faster processing
+                  </p>
+                </div>
+              </div>
+              {algorithm === 'greedy' && (
+                <div className="absolute top-2 right-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* New Dimensions */}

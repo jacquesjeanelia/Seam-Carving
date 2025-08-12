@@ -7,6 +7,7 @@ interface SeamCarverStore extends SeamCarverState {
   setNewDimensions: (dimensions: ImageDimensions) => void
   uploadImage: (file: File) => Promise<void>
   processImage: () => Promise<void>
+  clearUploadedImage: () => void
   reset: () => void
 }
 
@@ -142,6 +143,14 @@ export const useSeamCarver = create<SeamCarverStore>((set, get) => ({
     results: null,
     error: null,
     algorithm: 'dp',
+    newDimensions: { width: 0, height: 0 },
+  }),
+
+  clearUploadedImage: () => set({
+    uploadedImage: null,
+    uploadResponse: null,
+    results: null,
+    error: null,
     newDimensions: { width: 0, height: 0 },
   }),
 }))

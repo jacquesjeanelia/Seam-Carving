@@ -9,31 +9,23 @@ import { ResultsSection } from './results_section'
 import { CpuChipIcon } from '@heroicons/react/24/outline'
 
 export function SeamCarverApp() {
-  const { uploadResponse, processing, results, reset } = useSeamCarver()
+  const { uploadResponse, processing, results } = useSeamCarver()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <header className="glass-effect border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
-                <CpuChipIcon className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Seam Carving IDE
-                </h1>
-                <p className="text-gray-600">Content-aware image resizing</p>
-              </div>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+              <CpuChipIcon className="w-8 h-8 text-white" />
             </div>
-            <button
-              onClick={reset}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Reset
-            </button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Seam Carving IDE
+              </h1>
+              <p className="text-gray-600">Content-aware image resizing</p>
+            </div>
           </div>
         </div>
       </header>

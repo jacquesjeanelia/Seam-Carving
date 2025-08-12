@@ -139,6 +139,17 @@ export function ControlsSection() {
           </div>
         </div>
 
+        {/* Current Dimensions Display */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="text-sm font-medium text-gray-700 mb-2">Target Dimensions</div>
+          <div className="text-lg font-semibold text-gray-900">
+            {newDimensions.width} × {newDimensions.height}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Original: {uploadResponse.originalDimensions.width} × {uploadResponse.originalDimensions.height}
+          </div>
+        </div>
+
         {/* Manual Dimension Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">

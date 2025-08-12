@@ -6,10 +6,11 @@ import { UploadSection } from './upload_section'
 import { ControlsSection } from './controls_section'
 import { ProcessingSection } from './processing_section'
 import { ResultsSection } from './results_section'
-import { CpuChipIcon } from '@heroicons/react/24/outline'
+import { ImageCropSelector } from './image_crop_selector'
+import { PhotoIcon } from '@heroicons/react/24/outline'
 
 export function SeamCarverApp() {
-  const { uploadResponse, processing, results } = useSeamCarver()
+  const { uploadResponse, processing, results, setNewDimensions, newDimensions } = useSeamCarver()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -18,7 +19,7 @@ export function SeamCarverApp() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
-              <CpuChipIcon className="w-8 h-8 text-white" />
+              <PhotoIcon className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -47,19 +48,20 @@ export function SeamCarverApp() {
             ) : uploadResponse ? (
               <div className="glass-effect rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Original Image</h3>
-                <img
-                  src={uploadResponse.filePath}
-                  alt="Original"
-                  className="w-full h-auto rounded-lg shadow-lg"
+                <ImageCropSelector
+                  imageUrl={uploadResponse.filePath}
+                  originalDimensions={uploadResponse.originalDimensions}
+                  onCropChange={setNewDimensions}
+                  currentDimensions={newDimensions}
                 />
                 <div className="mt-4 text-sm text-gray-600">
-                  {uploadResponse.originalDimensions.width} × {uploadResponse.originalDimensions.height} pixels
+                  Original: {uploadResponse.originalDimensions.width} × {uploadResponse.originalDimensions.height} pixels
                 </div>
               </div>
             ) : (
               <div className="glass-effect rounded-lg p-12 text-center">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
-                  <CpuChipIcon className="w-12 h-12 text-gray-400" />
+                  <PhotoIcon className="w-12 h-12 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No image uploaded</h3>
                 <p className="text-gray-600">Upload an image to start processing</p>

@@ -95,7 +95,7 @@ class SeamCarver:
         total_difference = width_difference + height_difference
 
         progress = 0
-        seams = 1
+        seams = 0
         while current_width > new_width:
             progress = int(seams / (total_difference) * 100)
             print(f"Progress: {progress}%")
@@ -124,6 +124,7 @@ class SeamCarver:
                 seam, _ = self.find_seam_dp()
             self.remove_seam(seam)
             current_width, current_height = self.image.shape[:2]
+        print(f"Progress: 100%")
 
         self.image = self.image.transpose((1, 0, 2))
         self.energy_map = self.compute_energy()
@@ -131,10 +132,8 @@ class SeamCarver:
         return self.image
     
     def save_image(self, filename: str = 'output.png'):
-        plt.imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
-        plt.axis('off')
-        
-        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        # Use cv2.imwrite to preserve exact pixel data and quality
+        cv2.imwrite(filename, self.image)
         return self.image
     
     def save_energy_map(self, filename: str = 'energy_map.png'):
@@ -145,9 +144,6 @@ class SeamCarver:
         return self.energy_map
     
     def save_seams(self, filename: str = 'seams.png'): #FIXME
-        seam_image = self.seams_map.copy()
-        plt.imshow(cv2.cvtColor(seam_image, cv2.COLOR_BGR2RGB))
-        plt.axis('off')
-        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        return seam_image
-    
+        # Use cv2.imwrite to preserve exact pixel data and quality
+        cv2.imwrite(filename, self.seams_map)
+        return self.seams_map

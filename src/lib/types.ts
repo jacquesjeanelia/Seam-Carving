@@ -5,8 +5,6 @@ export interface ImageDimensions {
 
 export interface ProcessingResults {
   processedImage: string
-  energyMap: string
-  seamVisualization: string
   dimensions: {
     originalWidth: number
     originalHeight: number

@@ -109,8 +109,6 @@ export const useSeamCarver = create<SeamCarverStore>((set, get) => ({
                 set({ 
                   results: {
                     processedImage: data.paths.processedImage,
-                    energyMap: data.paths.energyMap,
-                    seamVisualization: data.paths.seamVisualization,
                     dimensions: data.dimensions,
                     algorithm: data.algorithm,
                     filename: data.filename,

@@ -87,18 +87,12 @@ export async function POST(request: NextRequest) {
                 }
 
                 const outputDir = path.join(process.cwd(), 'public', 'outputs', 'processed-images');
-                const energyMapDir = path.join(process.cwd(), 'public', 'outputs', 'energy-maps');
-                const seamVisualizationDir = path.join(process.cwd(), 'public', 'outputs', 'seam-visualization');
                 const name = filename.split('.')[0];
 
                 if (!existsSync(outputDir)) await mkdir(outputDir, { recursive: true });
-                if (!existsSync(energyMapDir)) await mkdir(energyMapDir, { recursive: true });
-                if (!existsSync(seamVisualizationDir)) await mkdir(seamVisualizationDir, { recursive: true });
 
                 const webPaths = {
                     processedImage: `/outputs/processed-images/${name}_resized_image.png`,
-                    energyMap: `/outputs/energy-maps/${name}_energy_map.png`,
-                    seamVisualization: `/outputs/seam-visualization/${name}_seams.png`,
                 };
 
                 send({ 

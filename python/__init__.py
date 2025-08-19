@@ -22,18 +22,18 @@ def main():
         
         # Use os.path.join for proper path handling
         processed_images_dir = os.path.join('public', 'outputs', 'processed-images')
-        energy_maps_dir = os.path.join('public', 'outputs', 'energy-maps')
-        seam_visualization_dir = os.path.join('public', 'outputs', 'seam-visualization')
+        # energy_maps_dir = os.path.join('public', 'outputs', 'energy-maps')
+        # seam_visualization_dir = os.path.join('public', 'outputs', 'seam-visualization')
         
         # Create directories if they don't exist
         os.makedirs(processed_images_dir, exist_ok=True)
-        os.makedirs(energy_maps_dir, exist_ok=True)
-        os.makedirs(seam_visualization_dir, exist_ok=True)
+        # os.makedirs(energy_maps_dir, exist_ok=True)
+        # os.makedirs(seam_visualization_dir, exist_ok=True)
         
         # Save the outputs
         seam_carver.save_image(os.path.join(processed_images_dir, f'{filename}_resized_image.png'))
-        seam_carver.save_energy_map(os.path.join(energy_maps_dir, f'{filename}_energy_map.png'))
-        seam_carver.save_seams(os.path.join(seam_visualization_dir, f'{filename}_seams.png'))
+        # seam_carver.save_energy_map(os.path.join(energy_maps_dir, f'{filename}_energy_map.png'))
+        # seam_carver.save_seams(os.path.join(seam_visualization_dir, f'{filename}_seams.png'))
         
         print("Seam carving completed.")
     except Exception as e:

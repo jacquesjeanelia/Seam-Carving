@@ -82,8 +82,8 @@ E(x,y) = √[(∂I/∂x)² + (∂I/∂y)²]
 
 | Algorithm | Description | Time Complexity | Quality |
 |-----------|-------------|-----------------|---------|
-| **Greedy** | Locally optimal seam selection | O(n×m) | Fast, lower quality |
-| **Dynamic Programming** | Globally optimal seam selection | O(n×m) | Slower, higher quality |
+| **Greedy** | Locally optimal seam selection | O(max(n,m)) | Fast, lower quality |
+| **Dynamic Programming** | Globally optimal seam selection | O(nm) | Slower, higher quality |
 
 ## Architecture
 
@@ -299,14 +299,6 @@ npm test
 python -m pytest python/tests/
 ```
 
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
 ## Error Handling
 
 The application includes comprehensive error handling:
@@ -336,75 +328,6 @@ The application includes comprehensive error handling:
 
 *Approximate values on modern hardware
 
-## Security
-
-- Input validation and sanitization
-- File type restrictions
-- Size limits on uploads
-- Path traversal prevention
-- No execution of user-provided code
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Setup
-
-1. Follow the installation instructions above
-2. Create a new branch for your feature
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/jacquesjeanelia/Seam-Carving/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jacquesjeanelia/Seam-Carving/discussions)
-- **Documentation**: This README and inline code comments
-
-## Acknowledgments
-
-- [Seam Carving for Content-Aware Image Resizing](https://faculty.runi.ac.il/arik/scweb/imret/index.html) - Original paper by Avidan & Shamir
-- Next.js team for the excellent framework
-- OpenCV community for computer vision tools
-- Contributors and testers
-
-## Roadmap
-
-### Current Version (v1.0)
-- ✅ Basic seam carving implementation
-- ✅ Web interface with real-time progress
-- ✅ Multiple algorithm support
-- ✅ TypeScript integration
-
-### Future Releases
-
-**v1.1 - Enhanced Processing**
-- [ ] Horizontal seam insertion for enlargement
-- [ ] Object protection masks
-- [ ] Batch processing support
-
-**v1.2 - Advanced Features**
-- [ ] GPU acceleration with WebGL
-- [ ] Progressive preview during processing
-- [ ] Advanced energy functions
-
-**v2.0 - Enterprise Features**
-- [ ] User authentication
-- [ ] Cloud storage integration
-- [ ] API rate limiting
-- [ ] Analytics dashboard
-
----
-
-<div align="center">
-
-**Built with care by the Seam Carving Team**
-
-[Star us on GitHub](https://github.com/jacquesjeanelia/Seam-Carving) • [Report Bug](https://github.com/jacquesjeanelia/Seam-Carving/issues) • [Request Feature](https://github.com/jacquesjeanelia/Seam-Carving/issues)
-
-</div>
